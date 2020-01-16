@@ -20,6 +20,17 @@ export default {
       msg: 'failure'
     });
 
+    // 奶牛
+    mock.onGet('/cow/heat').reply(200,{
+      startTime: '2020-1-9 00:00:00',
+      endTime: '2020-1-9 10:0:00',
+      heats: [38.2,38.3,38.5,38.9,38.4],
+      point: [{
+
+      }]
+
+    })
+
     //登录
     mock.onPost('/login').reply(config => {
       let {username, password} = JSON.parse(config.data);
@@ -35,7 +46,7 @@ export default {
           });
 
           if (hasUser) {
-            resolve([200, { code: 200, msg: '请求成功', user }]);
+            resolve([200, { code: 200, msg: '请求成功', data: user }]);
           } else {
             resolve([200, { code: 500, msg: '账号或密码错误' }]);
           }

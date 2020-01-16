@@ -16,20 +16,10 @@
 		</el-col>
 
 		<!--列表-->
-		<el-table :data="users" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
+		<el-table :data="cows" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
 			<el-table-column type="selection" width="55">
 			</el-table-column>
 			<el-table-column type="index" width="60">
-			</el-table-column>
-			<el-table-column prop="name" label="姓名" width="120" sortable>
-			</el-table-column>
-			<el-table-column prop="sex" label="性别" width="100" :formatter="formatSex" sortable>
-			</el-table-column>
-			<el-table-column prop="age" label="年龄" width="100" sortable>
-			</el-table-column>
-			<el-table-column prop="birth" label="生日" width="120" sortable>
-			</el-table-column>
-			<el-table-column prop="addr" label="地址" min-width="180" sortable>
 			</el-table-column>
 			<el-table-column label="操作" width="150">
 				<template scope="scope">
@@ -37,6 +27,19 @@
 					<el-button type="danger" size="small" @click="handleDel(scope.$index, scope.row)">删除</el-button>
 				</template>
 			</el-table-column>
+			<el-table-column prop="name" label="名字" width="120" sortable>
+			</el-table-column>
+			<el-table-column prop="old" label="年龄" width="100" sortable>
+			</el-table-column>
+			<el-table-column prop="catch_time" label="入场时间" width="230" sortable>
+			</el-table-column>
+			<el-table-column prop="weight" label="体重" width="120" sortable>
+			</el-table-column>
+			<el-table-column prop="is_heat" label="是否发情" min-width="180" :formatter="formatSex" sortable>
+			</el-table-column>
+			<el-table-column prop="breed_status" label="繁殖状态" min-width="180" :formatter="formatBreed">
+			</el-table-column>
+
 		</el-table>
 
 		<!--工具条-->
@@ -49,23 +52,29 @@
 		<!--编辑界面-->
 		<el-dialog title="编辑" v-model="editFormVisible" :close-on-click-modal="false">
 			<el-form :model="editForm" label-width="80px" :rules="editFormRules" ref="editForm">
-				<el-form-item label="姓名" prop="name">
+				<el-form-item label="名字" prop="name">
 					<el-input v-model="editForm.name" auto-complete="off"></el-input>
 				</el-form-item>
-				<el-form-item label="性别">
-					<el-radio-group v-model="editForm.sex">
-						<el-radio class="radio" :label="1">男</el-radio>
-						<el-radio class="radio" :label="0">女</el-radio>
+				<el-form-item label="是否发情">
+					<el-radio-group v-model="editForm.is_heat">
+						<el-radio class="radio" :label="true">是</el-radio>
+						<el-radio class="radio" :label="false">否</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item label="年龄">
-					<el-input-number v-model="editForm.age" :min="0" :max="200"></el-input-number>
+					<el-input-number v-model="editForm.old" :min="0" :max="50"></el-input-number>
 				</el-form-item>
-				<el-form-item label="生日">
-					<el-date-picker type="date" placeholder="选择日期" v-model="editForm.birth"></el-date-picker>
+				<el-form-item label="入场时间">
+					<el-date-picker type="date" placeholder="选择日期" v-model="editForm.catch_time"></el-date-picker>
 				</el-form-item>
-				<el-form-item label="地址">
-					<el-input type="textarea" v-model="editForm.addr"></el-input>
+				<el-form-item label="体重">
+					<el-input-number v-model="editForm.weight" precision="2" step="0.1" max="1000"></el-input-number>
+				</el-form-item>
+				<el-form-item label="繁殖状态">
+					<el-select v-model="editForm.breed_status" placeholder="选择繁殖状态">
+						<el-option v-for="item in breed_status" :key="item.value" :label="item.label" :value="item.value">
+						</el-option>
+					</el-select>
 				</el-form-item>
 			</el-form>
 			<div slot="footer" class="dialog-footer">
@@ -77,23 +86,29 @@
 		<!--新增界面-->
 		<el-dialog title="新增" v-model="addFormVisible" :close-on-click-modal="false">
 			<el-form :model="addForm" label-width="80px" :rules="addFormRules" ref="addForm">
-				<el-form-item label="姓名" prop="name">
+				<el-form-item label="名字" prop="name">
 					<el-input v-model="addForm.name" auto-complete="off"></el-input>
 				</el-form-item>
-				<el-form-item label="性别">
-					<el-radio-group v-model="addForm.sex">
-						<el-radio class="radio" :label="1">男</el-radio>
-						<el-radio class="radio" :label="0">女</el-radio>
+				<el-form-item label="是否发情">
+					<el-radio-group v-model="addForm.is_heat=false">
+						<el-radio class="radio" :label="true">是</el-radio>
+						<el-radio class="radio" :label="false">否</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item label="年龄">
 					<el-input-number v-model="addForm.age" :min="0" :max="200"></el-input-number>
 				</el-form-item>
-				<el-form-item label="生日">
-					<el-date-picker type="date" placeholder="选择日期" v-model="addForm.birth"></el-date-picker>
+				<el-form-item label="入场时间">
+					<el-date-picker type="date" placeholder="选择日期" v-model="addForm.catch_time"></el-date-picker>
 				</el-form-item>
-				<el-form-item label="地址">
-					<el-input type="textarea" v-model="addForm.addr"></el-input>
+				<el-form-item label="体重">
+					<el-input-number v-model="addForm.weight = 100" precision="2" step="0.1" max="1000"></el-input-number>
+				</el-form-item>
+				<el-form-item label="繁殖状态">
+					<el-select v-model="addForm.breed_status" placeholder="选择繁殖状态">
+						<el-option v-for="item in breed_status" :key="item.value" :label="item.label" :value="item.value">
+						</el-option>
+					</el-select>
 				</el-form-item>
 			</el-form>
 			<div slot="footer" class="dialog-footer">
@@ -106,8 +121,8 @@
 
 <script>
 	import util from '../../common/js/util'
-	//import NProgress from 'nprogress'
-	import { getUserListPage, removeUser, batchRemoveUser, editUser, addUser } from '../../api/api';
+	import NProgress from 'nprogress'
+	import { getCowListPage, removeUser, batchRemoveUser, editUser, addUser } from '../../api/api';
 
 	export default {
 		data() {
@@ -115,11 +130,17 @@
 				filters: {
 					name: ''
 				},
-				users: [],
+				cows: [],
 				total: 0,
 				page: 1,
 				listLoading: false,
 				sels: [],//列表选中列
+				breed_status: [
+					{value: 'NOTFERTILIZED',label: '未受精'},
+					{value: 'LACTATION', label: '泌乳'},
+					{value: 'NOMAL', label: '正常'}
+				],
+
 
 				editFormVisible: false,//编辑界面是否显示
 				editLoading: false,
@@ -132,10 +153,11 @@
 				editForm: {
 					id: 0,
 					name: '',
-					sex: -1,
-					age: 0,
+					is_heat: false,
+					old: 0,
 					birth: '',
-					addr: ''
+					weight: '',
+					breed_status: ''
 				},
 
 				addFormVisible: false,//新增界面是否显示
@@ -148,10 +170,11 @@
 				//新增界面数据
 				addForm: {
 					name: '',
-					sex: -1,
-					age: 0,
-					birth: '',
-					addr: ''
+					is_heat: false,
+					old: 0,
+					catch_time: '',
+					weight: '',
+					breed_status: ''
 				}
 
 			}
@@ -159,7 +182,19 @@
 		methods: {
 			//性别显示转换
 			formatSex: function (row, column) {
-				return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
+				return row.is_heat ? '是' : '否';
+			},
+			formatBreed: function(row) {
+				switch (row.breed_status) {
+					case 'NOTFERTILIZED':
+						return '未受精'
+					case 'LACTATION':
+						return '泌乳'
+					case 'NORMAL':
+						return '正常'
+					default:
+						return '其他'
+				}
 			},
 			handleCurrentChange(val) {
 				this.page = val;
@@ -168,16 +203,16 @@
 			//获取用户列表
 			getUsers() {
 				let para = {
-					page: this.page,
+					page_num: this.page,
 					name: this.filters.name
 				};
 				this.listLoading = true;
-				//NProgress.start();
-				getUserListPage(para).then((res) => {
-					this.total = res.data.total;
-					this.users = res.data.users;
+				NProgress.start();
+				getCowListPage(para).then((res) => {
+					this.total = res.total;
+					this.cows = res.data_list;
 					this.listLoading = false;
-					//NProgress.done();
+					NProgress.done();
 				});
 			},
 			//删除
@@ -187,34 +222,42 @@
 				}).then(() => {
 					this.listLoading = true;
 					//NProgress.start();
-					let para = { id: row.id };
-					removeUser(para).then((res) => {
+					let para = {ids: [row.id].toString()};
+					batchRemoveUser(para).then((res)=> {
 						this.listLoading = false;
-						//NProgress.done();
 						this.$message({
-							message: '删除成功',
-							type: 'success'
+							message: res.msg,
+							type: res.code===200?'success':'error'
 						});
 						this.getUsers();
-					});
-				}).catch(() => {
-
-				});
-			},
+					}).catch(() => {});
+				// 	removeUser(para).then((res) => {
+				// 		this.listLoading = false;
+				// 		//NProgress.done();
+				// 		this.$message({
+				// 			message: '删除成功',
+				// 			type: 'success'
+				// 		});
+				// 		this.getUsers();
+				// 	});
+				// }).catch(() => {
+				//
+				// });
+			})},
 			//显示编辑界面
 			handleEdit: function (index, row) {
-				this.editFormVisible = true;
 				this.editForm = Object.assign({}, row);
+				this.editFormVisible = true;
 			},
 			//显示新增界面
 			handleAdd: function () {
 				this.addFormVisible = true;
 				this.addForm = {
 					name: '',
-					sex: -1,
+					is_heat: false,
 					age: 0,
-					birth: '',
-					addr: ''
+					catch_time: '',
+					weight: 100
 				};
 			},
 			//编辑
@@ -225,13 +268,13 @@
 							this.editLoading = true;
 							//NProgress.start();
 							let para = Object.assign({}, this.editForm);
-							para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
+							para.catch_time = (!para.catch_time || para.catch_time == '') ? '' : util.formatDate.format(new Date(para.catch_time), 'yyyy-MM-dd hh:mm:ss');
 							editUser(para).then((res) => {
 								this.editLoading = false;
 								//NProgress.done();
 								this.$message({
-									message: '提交成功',
-									type: 'success'
+									message: res.msg,
+									type: res.code===200?'success':'error'
 								});
 								this.$refs['editForm'].resetFields();
 								this.editFormVisible = false;
@@ -249,13 +292,13 @@
 							this.addLoading = true;
 							//NProgress.start();
 							let para = Object.assign({}, this.addForm);
-							para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
+							para.catch_time = (!para.catch_time || para.catch_time == '') ? '' : util.formatDate.format(new Date(para.catch_time), 'yyyy-MM-dd hh:mm:ss');
 							addUser(para).then((res) => {
 								this.addLoading = false;
 								//NProgress.done();
 								this.$message({
-									message: '提交成功',
-									type: 'success'
+									message: res.msg,
+									type: res.code===200?'success':'error'
 								});
 								this.$refs['addForm'].resetFields();
 								this.addFormVisible = false;
@@ -281,8 +324,8 @@
 						this.listLoading = false;
 						//NProgress.done();
 						this.$message({
-							message: '删除成功',
-							type: 'success'
+							message: res.msg,
+							type: res.code===200?'success':'error'
 						});
 						this.getUsers();
 					});

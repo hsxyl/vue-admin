@@ -23,7 +23,7 @@
       return {
         logining: false,
         ruleForm2: {
-          account: 'admin',
+          account: 'wangxia',
           checkPass: '123456'
         },
         rules2: {
@@ -44,6 +44,7 @@
         this.$refs.ruleForm2.resetFields();
       },
       handleSubmit2(ev) {
+
         var _this = this;
         this.$refs.ruleForm2.validate((valid) => {
           if (valid) {
@@ -52,16 +53,17 @@
             //NProgress.start();
             var loginParams = { username: this.ruleForm2.account, password: this.ruleForm2.checkPass };
             requestLogin(loginParams).then(data => {
+              console.log(data);
               this.logining = false;
               //NProgress.done();
-              let { msg, code, user } = data;
+              let { msg, code} = data;
               if (code !== 200) {
                 this.$message({
                   message: msg,
                   type: 'error'
                 });
               } else {
-                sessionStorage.setItem('user', JSON.stringify(user));
+                sessionStorage.setItem('user', JSON.stringify(data.data));
                 this.$router.push({ path: '/table' });
               }
             });
@@ -71,7 +73,7 @@
           }
         });
       }
-    }
+    },
   }
 
 </script>

@@ -2,6 +2,12 @@
     <section class="chart-container">
         <el-row>
             <el-col :span="12">
+                <cow-heats cow-id=3 style="width:100%; height:400px;"></cow-heats>
+            </el-col>
+            <el-col :span="12">
+                <div id="containerColumn" style="width:100%; height: 400px;"></div>
+            </el-col>
+            <el-col :span="12">
                 <div id="chartColumn" style="width:100%; height:400px;"></div>
             </el-col>
             <el-col :span="12">
@@ -22,18 +28,93 @@
 
 <script>
     import echarts from 'echarts'
-
+    import CowHeats from "./CowHeats";
     export default {
         data() {
             return {
+                containerColumn: null,
                 chartColumn: null,
                 chartBar: null,
                 chartLine: null,
                 chartPie: null
             }
         },
-
         methods: {
+            drawContainer() {
+                this.containerColumn = echarts.init(document.getElementById("containerColumn"));
+                this.containerColumn.setOption({
+                    title: {
+                        text: '奶牛'
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    xAxis: {
+                        data: ['1','2']
+                    },
+                    yAxis: {
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    toolbox: {
+                        left: 'center',
+                        feature: {
+                            dataZoom: {
+                                yAxisIndex: 'none'
+                            },
+                            restore: {},
+                            saveAsImage:{}
+                        }
+                    },
+
+                    dataZoom: [
+                        {startValue: 4},
+                    ],
+                    visualMap: {
+                        top: 101,
+                        right: 52,
+                        pieces: [{
+                            gt: 1.2,
+                            lte: 2.2,
+                            color: '#096',
+                            label: 'test'
+                        }, {
+                            gt: 2.3,
+                            lte: 3.2,
+                            color: '#ffde33'
+                        }, {
+                            gt: 3.3,
+                            lte: 4.1,
+                            color: '#ff9933'
+                        }, {
+                            gt: 4.1,
+                            lte: 4.9,
+                            color: '#cc0033'
+                        }, {
+                            gt: 200,
+                            lte: 300,
+                            color: '#660099'
+                        }, {
+                            gt: 300,
+                            color: '#7e0023'
+                        }],
+                        outOfRange: {
+                            color: '#999'
+                        }
+                    },
+                    series: [{
+                        showAllSymbol: true,
+                        // symbol: 'image://asset/logo.png',
+                        name: 'Beijing AQI',
+                        type: 'line',
+                        data: [1.1,2.2,3.3,4.4,5.5],
+                        markPoint: {
+                            data: [{type:'max',name:'最大值'}]
+                        }
+                    }]
+                })
+            },
             drawColumnChart() {
                 this.chartColumn = echarts.init(document.getElementById('chartColumn'));
                 this.chartColumn.setOption({
@@ -184,19 +265,23 @@
                 });
             },
             drawCharts() {
+                this.drawContainer()
                 this.drawColumnChart()
                 this.drawBarChart()
                 this.drawLineChart()
                 this.drawPieChart()
             },
         },
-
         mounted: function () {
             this.drawCharts()
         },
         updated: function () {
             this.drawCharts()
+        },
+        components: {
+            CowHeats
         }
+
     }
 </script>
 

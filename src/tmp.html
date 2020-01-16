@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div id="app">
+        <cow-heats v-bind:id=1></cow-heats>
+    </div>
+</body>
+</html>
+<script>
+    import Vue from 'vue'
+    import App from './App'
+    import ElementUI from 'element-ui'
+    import 'element-ui/lib/theme-default/index.css'
+    import CowHeats from "../views/charts/CowHeats";
+    import VueRouter from "vue-router";
+    import Vuex from "vuex";
+    Vue.use(ElementUI)
+    Vue.use(VueRouter)
+    Vue.use(Vuex)
+    const vue = new Vue({
+        el: '#app',
+        component: {
+            CowHeats
+        }
+    })
+</script>

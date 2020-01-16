@@ -1,5 +1,8 @@
+import moment from "moment";
+import de from "element-ui/lib/locale/lang/de";
 var SIGN_REGEXP = /([yMdhsm])(\1*)/g;
 var DEFAULT_PATTERN = 'yyyy-MM-dd';
+var DEFAULT_PATTERN_TIME = ''
 function padding(s, len) {
     var len = len - (s + '').length;
     for (var i = 0; i < len; i++) { s = '0' + s; }
@@ -18,10 +21,8 @@ export default {
         return context == null || context == "" || context == "undefined" ? "" : context;
     },
     formatDate: {
-
-
         format: function (date, pattern) {
-            pattern = pattern || DEFAULT_PATTERN;
+            pattern = pattern || DEFAULT_PATTERN_TIME;
             return pattern.replace(SIGN_REGEXP, function ($0) {
                 switch ($0.charAt(0)) {
                     case 'y': return padding(date.getFullYear(), $0.length);
@@ -35,6 +36,7 @@ export default {
             });
         },
         parse: function (dateString, pattern) {
+            pattern = pattern || DEFAULT_PATTERN_TIME;
             var matchs1 = pattern.match(SIGN_REGEXP);
             var matchs2 = dateString.match(/(\d)+/g);
             if (matchs1.length == matchs2.length) {
@@ -55,7 +57,19 @@ export default {
             }
             return null;
         }
-
+    },
+    // 传入开始结束时间，生成时间序列，duration是时间间隔,
+    generateTimeSeiesByMoment: function (startTime,endTime,duration) {
+        let tmp = moment(startTime);
+        let ret = [];
+        while(!tmp.isAfter(endTime)) {
+            ret.push(moment(tmp));
+            tmp = tmp.add(duration)
+        }
+        return ret;
+    },
+    countPointSumBetweenBeginEnd: function (startTime,endTime) {
+        return Math.floor(endTime.diff(startTime,'hours')/4);
     }
 
 };
