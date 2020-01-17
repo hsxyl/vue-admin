@@ -37,7 +37,7 @@
                 pickedDateTime: [moment().subtract(1, 'days').toDate(), moment().toDate()],
                 defaultTime: "[" + moment().subtract(1, 'days').format(DEFAULT_DATE_FORMAT) + "," + moment().format(DEFAULT_DATE_FORMAT) + "]",
                 cowHeat: [],
-                predictNum: 5,
+                predictNum: 3,
                 predictCowHeat: [],
                 beginTime: moment(),
                 endTime: moment(),
@@ -48,7 +48,8 @@
         },
         methods: {
             // 根据timePicked请求奶牛体温数据
-            acquireCowHeat() {
+            acquireCowHeat(onRejected) {
+                debugger
                 queryCowHeat({
                     cow_id: this.cowId,
                     begin_time: moment(this.pickedDateTime[0]).format(DEFAULT_DATE_FORMAT),
@@ -56,19 +57,24 @@
                 }).then(resData => {
                     let {msg, code, data} = resData
                     if (code != 200) {
+                        debugger
                         this.$message({
                             message: msg,
                             type: 'error'
                         });
                     } else {
+                        debugger
                         this.cowHeat = data.heat_list//JSON.parse(data.heat_list);
-                        this.beginTime = moment(data.begin_time,DEFAULT_DATE_FORMAT);
-                        this.endTime = moment(data.end_time,DEFAULT_DATE_FORMAT);
+                        this.beginTime = moment(data.begin_time, DEFAULT_DATE_FORMAT);
+                        this.endTime = moment(data.end_time, DEFAULT_DATE_FORMAT);
                         // console.log("success to acquireCowheat,data.heat_list is "+this.cowHeat+
                         //     ",data.begin_time is "+data.begin_time+
                         //     ",data.end_time is "+data.end_time);
-                        this.drawContainer();
+                        // this.drawContainer();
                     }
+                }).catch(resData => {
+                    debugger
+                    console.log(resData);
                 })
             },
             acquirePredictCowHeat() {
@@ -78,7 +84,7 @@
                     'begin_time': this.beginTime.format(DEFAULT_DATE_FORMAT)
                 }).then(resData => {
                     let {msg, code, data} = resData;
-                    if (code != 200) {
+                    if (code !== 200) {
                         this.$message({
                             message: msg,
                             type: 'error'
@@ -90,9 +96,49 @@
                     }
                 })
             },
+            acquireCowHeatAll() {
+                let acquireCowHeat = queryCowHeat({
+                    cow_id: this.cowId,
+                    begin_time: moment(this.pickedDateTime[0]).format(DEFAULT_DATE_FORMAT),
+                    end_time: moment(this.pickedDateTime[1]).format(DEFAULT_DATE_FORMAT)
+                });
+                let acquirePredicHeat = queryPredictHeat({
+                    cow_id: this.cowId,
+                    predict_num: this.predictNum,
+                    begin_time: this.endTime.add(this.duration).format(DEFAULT_DATE_FORMAT)
+                });
+                this.$axios.all([acquireCowHeat, acquirePredicHeat])
+                    .then(this.$axios.spread((res1, res2) => {
+                        let data1 = res1.data;
+                        let data2 = res2.data;
+                        if (data1.code !== 200) {
+                            this.$message({
+                                message: data1.msg,
+                                type: 'error'
+                            })
+                        } else {
+                            this.cowHeat = data1.data.heat_list//JSON.parse(data.heat_list);
+                            this.beginTime = moment(data1.data.begin_time, DEFAULT_DATE_FORMAT);
+                            this.endTime = moment(data1.data.end_time, DEFAULT_DATE_FORMAT);
+                        }
+                        if (data2.code !== 200) {
+                            this.$message({
+                                message: data2.msg,
+                                type: 'error'
+                            })
+                        } else {
+                            this.predictCowHeat = data2.data.cow_heat;
+                            this.predictBeginTime = moment(data2.data.begin_time, DEFAULT_DATE_FORMAT);
+                            this.predictEndTime = moment(data2.data.end_time, DEFAULT_DATE_FORMAT);
+                        }
+                    })).then(() => {
+                    this.drawContainer();
+                });
+            },
             drawContainer() {
                 // this.acquireCowHeat();
-                // this.acquirePredictCowHeat();
+                // this.acquireCowHeatAll()
+                // await this.acquirePredictCowHeat();
                 this.containerColumn = echarts.init(document.getElementById(this.chartId));
                 this.containerColumn.setOption({
                     title: {
@@ -103,7 +149,7 @@
                     },
                     xAxis: {
                         type: 'category',
-                        data: util.generateTimeSeiesByMoment(this.beginTime,this.endTime,this.duration).map(e=>e.format(XAXIS_FORMAT))
+                        data: util.generateTimeSeiesByMoment(this.beginTime, this.predictEndTime, this.duration).map(e => e.format(XAXIS_FORMAT))
 
                         //+ util.generateTimeSeiesByMoment(this.predictBeginTime, this.predictEndTime, this.duration),//[1.1, 2.2, 3.3, 4.4, 5.5]
                     },
@@ -125,23 +171,29 @@
                         }
                     },
                     dataZoom: [
-                        {startValue: util.countPointSumBetweenBeginEnd(this.beginTime,this.endTime,this.duration)
-                         },
+                        {
+                            startValue: util.countPointSumBetweenBeginEnd(this.beginTime, this.predictEndTime, this.duration)
+                        },
                     ],
                     visualMap: {
-                        top: 101,
+                        top: 221,
                         right: 52,
                         pieces: [{
-                          gt: 33,
-                          lte: 34,
-                          color: '#061777',
-                          label: '33-34°'
+                            lte: 33,
+                            color: '#cc0033',
+                            label: '<33'
                         },
-                        {
-                            gt: 34,
-                            lte: 35,
-                            color: '#096',
-                            label: '34-35°'
+                            {
+                                gt: 33,
+                                lte: 34,
+                                color: '#061777',
+                                label: '33-34°'
+                            },
+                            {
+                                gt: 34,
+                                lte: 35,
+                                color: '#096',
+                                label: '34-35°'
                         }, {
                             gt: 35,
                             lte: 36,
@@ -160,9 +212,11 @@
                         {
                             name: 'cow heat',
                             type: 'line',
-                            data: (() => {
-                                console.log('this:', this);
-                                return this.cowHeat;})(),
+                            markArea: {
+                                silent: true,
+                                data: [[{xAxis: this.predictBeginTime.format(XAXIS_FORMAT)}, {xAxis: this.predictEndTime.format(XAXIS_FORMAT)}]]
+                            },
+                            data: this.cowHeat.concat(this.predictCowHeat),
                             // markPoint: {
                             //     itemStyle: {
                             //         normal: {
@@ -177,11 +231,11 @@
                             //     data: this.cowHeat+this.predictCowHeat
                             // }
                         },
-                        {
-                            name: 'predict heat',
-                            type: 'line',
-                            // data: [...Array(this.cowHeat.length)] + this.predictCowHeat,
-                        }
+                        // {
+                        //     name: 'predict heat',
+                        //     type: 'line',
+                        //     // data: [...Array(this.cowHeat.length)] + this.predictCowHeat,
+                        // }
                     ]
                 });
                 this.containerColumn.dispatchAction({
@@ -189,18 +243,18 @@
                     areas: [
                         {
                             brushType: 'lineX',
-                            coordRange: [this.predictBeginTime.toDate(),this.predictEndTime.toDate()],
+                            coordRange: ['17-06', '17-10'],
                         }
                     ]
                 })
             },
             pickTime() {
-                this.acquireCowHeat();
+                this.acquireCowHeatAll();
             }
         },
         mounted() {
-            this.acquireCowHeat();
-            this.drawContainer();
+            this.acquireCowHeatAll();
+            // this.drawContainer();
             // this.drawContainer(this.cowHeat)
         },
         updated() {

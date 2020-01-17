@@ -69,7 +69,7 @@ export default {
         return ret;
     },
     countPointSumBetweenBeginEnd: function (startTime,endTime) {
-        return Math.floor(endTime.diff(startTime,'hours')/4);
+         return Math.floor(endTime.diff(startTime, 'hours') / 4);
     }
 
 };
